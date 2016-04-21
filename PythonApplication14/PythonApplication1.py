@@ -1,6 +1,11 @@
-import sys, pygame, time, random
+#Kendall Miller
+#Nimoy Vaidya
+#Programming I: final project
+#game name: Escape Velocity Madness
+import pygame, time, random
 
 pygame.init()
+#some global variables
 x = 1
 y = 1
 hasyllwkey = 0
@@ -8,18 +13,7 @@ hasbluekey = 0
 hasgrnkey = 0
 hasredkey = 0
 level_selector = 1
-
-def choose_level():
-    global level_selector
-    global board
-    if level_selector == 1:
-        level = "level1.txt"
-    if level_selector == 2:
-        level = "level2.txt"
-    if level_selector == 3:
-        level = "level3.txt"
-    with open(level) as level1:
-        board = [line.split() for line in level1]
+guard_move_counter = 0
 
 display_width = 1000
 display_height = 800
@@ -34,6 +28,20 @@ screen = pygame.display.set_mode((display_width,display_height))
 pygame.display.set_caption('Escape Velocity Madness')
 clock = pygame.time.Clock()
 
+# Decides which text file is used to populate the board array based on the value of level_selector
+def choose_level():
+    global level_selector
+    global board
+    if level_selector == 1:
+        level = "level1.txt"
+    if level_selector == 2:
+        level = "level2.txt"
+    if level_selector == 3:
+        level = "level3.txt"
+    with open(level) as level1:
+        board = [line.split() for line in level1]
+
+#loading all the assets to be used on the board and splash screen
 prisoner = pygame.image.load('flash.png')
 floor = pygame.image.load('th.jpg')
 wall = pygame.image.load('wall.png')
@@ -51,8 +59,7 @@ bigflash = pygame.image.load('flashbck.png')
 bckrnd = pygame.image.load('blockwall.png')
 exit = pygame.image.load('exit.png')
 
-
-guard_move_counter = 0
+#loops through the board array and determines which asset to draw and where it should go
 def draw_object():
     global board
     global guard_move_counter
@@ -87,11 +94,13 @@ def draw_object():
             elif j == '!':
                 draw_guard(50*index_x,50*index_y)
                 if (guard_move_counter % 5) == 0:
+                    #is meant to move the guard once every 5 ticks though sometimes moves more often than that for unknown reason.
                     guard_move(index_x,index_y)
                     
             index_x += 1
         index_y += 1
 
+#a draw fucntion for each asset to simplify the process
 def draw_yllwdoor(x,y):
     screen.blit(yllwdoor,(x,y))
 
@@ -140,28 +149,14 @@ def draw_bckrnd(x,y):
 def draw_exit(x,y):
     screen.blit(exit,(x,y))
 
+#similar to the draw asset functions, but takes all necessary parameters for full text customization.
 def draw_text(word,size,font_type,color,x,y):
     font = pygame.font.SysFont(font_type,size)
     label = font.render(word, 1, (color))
     screen.blit(label, (x,y))
 
-def guard_move(index_x,index_y):
-    global board
-    direction = random.randrange(4)
-    if direction == 0 and board[index_y-1][index_x] == '_':
-        board[index_y][index_x] = '_'
-        board[index_y-1][index_x] = '!'
-    elif direction == 1 and board[index_y+1][index_x] == '_':
-        board[index_y][index_x] = '_'
-        board[index_y+1][index_x] = '!'
-    elif direction == 2 and board[index_y][index_x-1] == '_':
-        board[index_y][index_x] = '_'
-        board[index_y][index_x-1] = '!'
-    elif direction == 3 and board[index_y][index_x+1] == '_':
-        board[index_y][index_x] = '_'
-        board[index_y][index_x+1] = '!'
 
-
+#draws the floor of the prison
 def draw_floor():
     global board
     i = 0
@@ -173,10 +168,12 @@ def draw_floor():
             i = i+50
         j = j+50
 
+#gets the keyboard input from the user
 def get_input():
     key = pygame.key.get_pressed()
     return key
 
+#checks if the player has obtained the correct key for a door
 def door_unlock(a):
     global hasyllwkey
     global hasbluekey
@@ -192,13 +189,15 @@ def door_unlock(a):
         return True
     elif a == "Y" or a == "B" or a == "G" or a == "R":
         return False
-        
+
+#checks if the next space is a wall    
 def is_wall(a):
     if a == "H":
         return True
     else: 
         return False
-        
+
+#checks if the next space is a key and which key it is 
 def is_key(a):
     global hasyllwkey
     global hasbluekey
@@ -218,7 +217,8 @@ def is_key(a):
         return True
     else:
         return False
-        
+
+#checks if the next space is a winning space. F for a level win and f for a game win        
 def is_win(a):
     if a == "F":
         return True
@@ -226,16 +226,19 @@ def is_win(a):
         quit()
     else: 
         return False
-        
+
+#checks if the next space contains a guard that will kill the player  
 def is_dead(a):
     if a == "!":
         return True
     else:
         return False
 
+#if the player has died, displays a taunting death message
 def death_message():
    draw_text("YOU DIED",45,"timesnewroman",red,365,400)
 
+#determines how to update the array based upon player keyboard input
 def board_move(key,board):
     global x
     global y
@@ -260,6 +263,24 @@ def board_move(key,board):
         x = x + 1
         return
 
+#simple random movement for the joker guards
+def guard_move(index_x,index_y):
+    global board
+    direction = random.randrange(4)
+    if direction == 0 and board[index_y-1][index_x] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y-1][index_x] = '!'
+    elif direction == 1 and board[index_y+1][index_x] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y+1][index_x] = '!'
+    elif direction == 2 and board[index_y][index_x-1] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y][index_x-1] = '!'
+    elif direction == 3 and board[index_y][index_x+1] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y][index_x+1] = '!'
+
+#uses the player's input to check which type of space the next space is and what actions to take based on that.
 def game_logic(move,key):
     global x
     global y
@@ -305,12 +326,15 @@ def game_logic(move,key):
         draw_object()
         return False
 
+#the main game loop and splash sceen loop
 def game():
     global x
     global y
     global board
     global level_selector
     pressed = False
+    #this loop is the splash screen and hard codes objects to specific locations
+    #would need to generalize this if resolution scaling were added, but didn't get to that
     while not pressed:
         screen.fill(black)
         draw_bckrnd(0,0)
@@ -336,6 +360,7 @@ def game():
             draw_text("NEW GAME",40,"Stencil",white,50,405)
             if pygame.mouse.get_pressed() == (True,False,False):
                 level_selector = 1
+                choose_level()
         elif posx >= 50 and posx <= 250 and posy >= 470 and posy <= 520:
             pygame.draw.rect(screen,green,(40,465,220,60))
             draw_text("QUIT",45,"Stencil",white,95,475)
@@ -346,8 +371,10 @@ def game():
             if event.type == pygame.QUIT:
                 quit()
         pygame.display.update()
+        #refresh 60 times every second
         clock.tick(60)
     caught = False
+    #runs the game for as long as the caught variale = false
     while not caught:
         key = get_input()
         for event in pygame.event.get():
@@ -371,11 +398,13 @@ def game():
         elif key[pygame.K_ESCAPE]:
             game()
         pygame.display.update()
+        #refresh 15 time every second
         clock.tick(15)
     death_message()
     pygame.display.update()
     time.sleep(5)
     pygame.quit()
     quit()
+#initial function calls that start the game
 choose_level()
 game()
