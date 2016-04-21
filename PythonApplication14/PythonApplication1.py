@@ -360,7 +360,10 @@ def game():
             draw_text("NEW GAME",40,"Stencil",white,50,405)
             if pygame.mouse.get_pressed() == (True,False,False):
                 level_selector = 1
+                x = 1
+                y = 1
                 choose_level()
+                pressed = True
         elif posx >= 50 and posx <= 250 and posy >= 470 and posy <= 520:
             pygame.draw.rect(screen,green,(40,465,220,60))
             draw_text("QUIT",45,"Stencil",white,95,475)
