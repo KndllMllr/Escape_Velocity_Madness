@@ -1,4 +1,4 @@
-import sys, pygame
+import sys, pygame, time, random
 
 pygame.init()
 x = 1
@@ -7,17 +7,16 @@ hasyllwkey = 0
 hasbluekey = 0
 hasgrnkey = 0
 hasredkey = 0
-num = 0
-thing = 1
+level_selector = 1
 
 def choose_level():
-    global thing
+    global level_selector
     global board
-    if thing == 1:
+    if level_selector == 1:
         level = "level1.txt"
-    if thing == 2:
+    if level_selector == 2:
         level = "level2.txt"
-    if thing == 3:
+    if level_selector == 3:
         level = "level3.txt"
     with open(level) as level1:
         board = [line.split() for line in level1]
@@ -25,22 +24,17 @@ def choose_level():
 display_width = 1000
 display_height = 800
 
-black = (50,50,50)
+black = (30,30,30)
 white = (255,255,255)
-red = (255,0,0)
-blue = (0,0,255)
 green = (0,100,0)
-yellow = (255,255,0)
-dark_blue = (0,0,205)
-firebrick = (178,34,34)
-
+red = (255,0,0)
+purple = (128,0,128)
 
 screen = pygame.display.set_mode((display_width,display_height))
 pygame.display.set_caption('Escape Velocity Madness')
 clock = pygame.time.Clock()
 
 prisoner = pygame.image.load('flash.png')
-chip = pygame.image.load('chip-south.png')
 floor = pygame.image.load('th.jpg')
 wall = pygame.image.load('wall.png')
 yllwdoor = pygame.image.load('yllwdoorkey.png')
@@ -55,13 +49,16 @@ joker = pygame.image.load('joker.gif')
 joker2 = pygame.image.load('joker2.png')
 bigflash = pygame.image.load('flashbck.png')
 bckrnd = pygame.image.load('blockwall.png')
+exit = pygame.image.load('exit.png')
 
 
-
+guard_move_counter = 0
 def draw_object():
     global board
+    global guard_move_counter
     index_x=0
     index_y=0
+    guard_move_counter += 1
     for i in board:
         index_x = 0
         for j in i:
@@ -69,8 +66,8 @@ def draw_object():
                 draw_prisoner(50*index_x,50*index_y)
             elif j == 'H':
                 draw_wall(50*index_x,50*index_y)
-            elif j == 'F':
-                draw_chip(50*index_x,50*index_y)
+            elif j == 'F' or j == 'f':
+                draw_exit(50*index_x,50*index_y)
             elif j == 'Y':
                 draw_yllwdoor(50*index_x,50*index_y)
             elif j == 'B':
@@ -89,11 +86,11 @@ def draw_object():
                 draw_redkey(50*index_x,50*index_y)
             elif j == '!':
                 draw_guard(50*index_x,50*index_y)
-
-
-                
-            index_x = index_x+1
-        index_y = index_y+1
+                if (guard_move_counter % 5) == 0:
+                    guard_move(index_x,index_y)
+                    
+            index_x += 1
+        index_y += 1
 
 def draw_yllwdoor(x,y):
     screen.blit(yllwdoor,(x,y))
@@ -125,9 +122,6 @@ def draw_wall(x,y):
 def draw_prisoner(x,y):
     screen.blit(prisoner,(x,y))
 
-def draw_chip(x,y):
-    screen.blit(chip,(x,y))
-
 def draw_floortile(x,y):
     screen.blit(floor,(x,y))
 
@@ -143,11 +137,29 @@ def draw_flash(x,y):
 def draw_bckrnd(x,y):
     screen.blit(bckrnd,(x,y))
 
-def draw_text(word,size,color,x,y):
-    font = pygame.font.SysFont("Stencil",size)
+def draw_exit(x,y):
+    screen.blit(exit,(x,y))
+
+def draw_text(word,size,font_type,color,x,y):
+    font = pygame.font.SysFont(font_type,size)
     label = font.render(word, 1, (color))
     screen.blit(label, (x,y))
 
+def guard_move(index_x,index_y):
+    global board
+    direction = random.randrange(4)
+    if direction == 0 and board[index_y-1][index_x] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y-1][index_x] = '!'
+    elif direction == 1 and board[index_y+1][index_x] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y+1][index_x] = '!'
+    elif direction == 2 and board[index_y][index_x-1] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y][index_x-1] = '!'
+    elif direction == 3 and board[index_y][index_x+1] == '_':
+        board[index_y][index_x] = '_'
+        board[index_y][index_x+1] = '!'
 
 
 def draw_floor():
@@ -221,17 +233,8 @@ def is_dead(a):
     else:
         return False
 
-def death_message(num):
-   if num < 15:
-       print("You were mauled to death by hungry rats")
-   elif num >= 15 and num < 25:
-       print("You fell into a very deep pit full of giant spiders")
-   elif num >= 25 and num < 35:
-       print("You tripped and broke your neck")
-   elif num >= 35 and num < 45:
-       print("You took an arrow to the knee")
-   elif num >= 45:
-       print("You have died of dysentery")
+def death_message():
+   draw_text("YOU DIED",45,"timesnewroman",red,365,400)
 
 def board_move(key,board):
     global x
@@ -258,11 +261,10 @@ def board_move(key,board):
         return
 
 def game_logic(move,key):
-    global num
     global x
     global y
     global board
-    global thing
+    global level_selector
     global hasyllwkey
     global hasbluekey
     global hasgrnkey
@@ -277,7 +279,7 @@ def game_logic(move,key):
     elif is_win(move):
         board_move(key,board)
         draw_object()
-        thing += 1
+        level_selector += 1
         x = 1
         y = 1
         hasyllwkey = 0
@@ -297,10 +299,8 @@ def game_logic(move,key):
     elif is_dead(move):
         board_move(key,board)
         draw_object()
-        death_message(num)
         return True
     else:
-        num = num + 1
         board_move(key,board)
         draw_object()
         return False
@@ -309,53 +309,50 @@ def game():
     global x
     global y
     global board
-    global thing
+    global level_selector
     pressed = False
     while not pressed:
         screen.fill(black)
         draw_bckrnd(0,0)
         draw_joker(250,0)
         draw_flash(200,100)
-        draw_text("Slow down Flash!",25,green,730,30)
-        draw_text("I think you're",25,green,730,50)
-        draw_text("Starting to Fade",25,green,730,70)
+        draw_text("Slow down Flash!",35,"gigi",purple,730,30)
+        draw_text("I think you're",35,"gigi",purple,730,60)
+        draw_text("Starting to Fade",35,"gigi",purple,730,90)
         pygame.draw.rect(screen,green,(50,330,200,50))
         pygame.draw.rect(screen,green,(50,400,200,50))
         pygame.draw.rect(screen,green,(50,470,200,50))
-        draw_text("PLAY",35,white,105,340)
-        draw_text("NEW GAME",35,white,65,410)
-        draw_text("QUIT",35,white,105,480)
+        draw_text("PLAY",35,"Stencil",white,105,340)
+        draw_text("NEW GAME",35,"Stencil",white,65,410)
+        draw_text("QUIT",35,"Stencil",white,105,480)
         (posx,posy) = pygame.mouse.get_pos()
         if posx >= 50 and posx <= 250 and posy >= 330 and posy <= 380:
             pygame.draw.rect(screen,green,(40,325,220,60))
-            draw_text("PLAY",45,white,90,335)
+            draw_text("PLAY",45,"Stencil",white,90,335)
             if pygame.mouse.get_pressed() == (True,False,False):
                 pressed = True
         elif posx >= 50 and posx <= 250 and posy >= 400 and posy <= 450:
             pygame.draw.rect(screen,green,(40,395,220,60))
-            draw_text("NEW GAME",40,white,50,405)
+            draw_text("NEW GAME",40,"Stencil",white,50,405)
             if pygame.mouse.get_pressed() == (True,False,False):
-                print("hello world")
-                thing = 1
+                level_selector = 1
         elif posx >= 50 and posx <= 250 and posy >= 470 and posy <= 520:
             pygame.draw.rect(screen,green,(40,465,220,60))
-            draw_text("QUIT",45,white,95,475)
+            draw_text("QUIT",45,"Stencil",white,95,475)
             if pygame.mouse.get_pressed() == (True,False,False):
                 quit()
          
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pressed = True
                 quit()
         pygame.display.update()
         clock.tick(60)
-    choose_level()
     caught = False
     while not caught:
         key = get_input()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                caught = True
+                quit()
         screen.fill(white)
         draw_floor()
         draw_object()
@@ -374,8 +371,11 @@ def game():
         elif key[pygame.K_ESCAPE]:
             game()
         pygame.display.update()
-        clock.tick(20)
-
+        clock.tick(15)
+    death_message()
+    pygame.display.update()
+    time.sleep(5)
     pygame.quit()
     quit()
+choose_level()
 game()
